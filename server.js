@@ -448,19 +448,18 @@ wss.on('connection', async (ws, req) => {
   else if (req.url === '/latencia') {
     await processaLatencia(ws, inputPath);
 
-    const tail = new Tail(pathCpu);
+    console.log('latencia')
+    const tail = new Tail(inputPath);
 
     tail.on("line", function (data) {
       const lines = data.split(';')
+      console.log(lines)
 
       const endTime = parseInt(lines[0]);
 
-      if (lines[0] === "Database startup") {
-        database_startup_time_latencia = parseInt(lines[2]);
-      }
 
       if (lines[0].match(/^\d+$/)) {
-        const num = Math.floor((endTime - database_startup_time_latencia) / 1000000);
+        const num = Math.floor((endTime - database_startup_time) / 1000000);
 
         if (lines[5] === 'N') {
           x1.push(num);
@@ -475,6 +474,7 @@ wss.on('connection', async (ws, req) => {
       }
     
     });
+
   }
   else {
     ws.send('Invalid URL');

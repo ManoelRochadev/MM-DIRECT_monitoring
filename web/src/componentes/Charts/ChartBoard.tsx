@@ -3,10 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import CpuChart from "./CpuChart";
 import TransactionChart from "./TransferChart";
 import MemoryChart from "./MemoryChart";
-import FocusChart from "./FocusChart";
+//import FocusChart from "./FocusChart";
 import TerminalController from "../TerminalController";
 import ToggleSwitch from "./ToggleSwitch";
 import ReloadButton from "../ReloadButton";
+import { ScatterChart } from "./ScatterChart";
 
 interface ChartBoardProps {
     cpuChart: boolean;
@@ -24,7 +25,7 @@ const ChartBoard = ({
     const [showInsights, setShowInsights] = useState<boolean>(true);
     const [showTerminal, setShowTerminal] = useState<boolean>(true);
    
-    const [selectedChart, setSelectedChart] = useState<"CpuChart" | "TransactionChart" | "MemoryChart">("CpuChart");
+    const [selectedChart, setSelectedChart] = useState<"CpuChart" | "TransactionChart" | "MemoryChart" | "ScatterChart">("CpuChart");
    // const [focusChartData, setFocusChartData] = useState<[[string, string][], [number, number][]][]>([]);
    // const [focusChartConfig, setFocusChartConfig] = useState<any>(null);
     const [chartConnections, setChartConnections] = useState<WebSocket[]>([]);
@@ -46,7 +47,8 @@ const ChartBoard = ({
     const focusChartComponents = useMemo(() => ({
         "CpuChart": <CpuChart  data={dataCPU} chartMode="default" />,
         "TransactionChart": <TransactionChart data={dataTransfer} chartMode="default" />,
-        "MemoryChart": <MemoryChart data={dataMemory} chartMode="default" />
+        "MemoryChart": <MemoryChart data={dataMemory} chartMode="default" />,
+        "ScatterChart": <ScatterChart chartMode="default" />,
     }), [dataCPU, dataTransfer, dataMemory]);
 
     useEffect(() => {
@@ -182,14 +184,32 @@ const ChartBoard = ({
         };
     }, [])
 
+    useEffect(() => {
+        const ws = new WebSocket("ws://localhost:8081/latencia");
+
+        ws.onopen = () => {
+            console.log(`conexão aberta em ${ScatterChart.name}`);
+            setChartConnections((prevInfo: WebSocket[]) => [...prevInfo, ws]);
+        }
+
+        ws.onmessage = (event) => {
+            try {
+                console.log(event.data);
+            } catch (error) {
+                console.error("Error parsing WebSocket message:", error);
+            }
+        };
+    }, [])
+
 
 
     const ToggleTargetComponent = (targetValue: any, setTargetValue: any) => {
         setTargetValue(!targetValue)
     };
 
-    const handleChartClick = (chartName: "CpuChart" | "TransactionChart" | "MemoryChart") => {
+    const handleChartClick = (chartName: "CpuChart" | "TransactionChart" | "MemoryChart" | "ScatterChart") => {
         setSelectedChart(chartName);
+        console.log(chartName)
     }
 
     return (
@@ -211,6 +231,13 @@ const ChartBoard = ({
                         </button>
                         <button id="chart_3" className={`${showInsights ? "" : 'hidden'} w-full`} onClick={() => handleChartClick("MemoryChart")}>
                             {transferChart && <MemoryChart chartMode="minimalist" data={dataMemory} />}
+                        </button>
+                        <button
+                        id="chart_4"
+                        className={`${showInsights ? "" : 'hidden'} w-full`}
+                        onClick={() => handleChartClick("ScatterChart")}
+                        >
+                            {transferChart && <ScatterChart />}
                         </button>
                     </div>
 
