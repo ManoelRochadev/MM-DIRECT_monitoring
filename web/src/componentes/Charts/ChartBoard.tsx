@@ -16,6 +16,11 @@ interface ChartBoardProps {
     onReloadButtonClick: (e: Event, chartConnections: WebSocket[]) => void;
 }
 
+interface LatencyEntry {
+    x1: [number, number];
+    x2: [number, number];
+  }
+
 const ChartBoard = ({
     cpuChart,
     transferChart,
@@ -32,6 +37,7 @@ const ChartBoard = ({
     const [dataCPU, setDataCPU] = useState<[number, number][]>([]);
     const [dataTransfer, setDataTransfer] = useState<[number, number][]>([]);
     const [dataMemory, setDataMemory] = useState<[number, number][]>([]);
+    const [dataScatter, setDataScatter] = useState<any[]>([]);
 
     // variável para armazenar o timestamp da última atualização
     const timestampsCpu: number[] = [];
@@ -48,7 +54,7 @@ const ChartBoard = ({
         "CpuChart": <CpuChart  data={dataCPU} chartMode="default" />,
         "TransactionChart": <TransactionChart data={dataTransfer} chartMode="default" />,
         "MemoryChart": <MemoryChart data={dataMemory} chartMode="default" />,
-        "ScatterChart": <ScatterChart chartMode="default" />,
+        "ScatterChart": <ScatterChart data={dataScatter} chartMode="default" />,
     }), [dataCPU, dataTransfer, dataMemory]);
 
     useEffect(() => {
@@ -118,6 +124,10 @@ const ChartBoard = ({
             }
         };
 
+
+
+        
+
       return  ws.onclose = () => {
             console.log("Transfer Connection closed");
         };
@@ -185,23 +195,27 @@ const ChartBoard = ({
     }, [])
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8081/latencia");
+        const ws2 = new WebSocket("ws://localhost:8081/latencia");
 
-        ws.onopen = () => {
+        ws2.onopen = () => {
             console.log(`conexão aberta em ${ScatterChart.name}`);
-            setChartConnections((prevInfo: WebSocket[]) => [...prevInfo, ws]);
+            setChartConnections((prevInfo: WebSocket[]) => [...prevInfo, ws2]);
         }
 
-        ws.onmessage = (event) => {
+        ws2.onmessage = (event) => {
             try {
-                console.log(event.data);
+                const message = JSON.parse(event.data);
+
+               // setDataScatter((dadosAnteriores) => [...dadosAnteriores, message]);
             } catch (error) {
                 console.error("Error parsing WebSocket message:", error);
             }
         };
+
+        return ws2.onclose = () => {
+            console.log("Scatter Connection closed");
+        };
     }, [])
-
-
 
     const ToggleTargetComponent = (targetValue: any, setTargetValue: any) => {
         setTargetValue(!targetValue)
@@ -237,7 +251,7 @@ const ChartBoard = ({
                         className={`${showInsights ? "" : 'hidden'} w-full`}
                         onClick={() => handleChartClick("ScatterChart")}
                         >
-                            {transferChart && <ScatterChart />}
+                            {transferChart && <ScatterChart data={dataScatter} />}
                         </button>
                     </div>
 

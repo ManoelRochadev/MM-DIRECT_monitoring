@@ -167,12 +167,12 @@ const processaLatencia = async (ws, inputPath) => {
           if (row.type === 'N') {
             x1.push(num);
             y1.push(parseInt(row.latency));
-            ws.send(JSON.stringify({ 1: [num, parseInt(row.latency)] }));
+            ws.send(JSON.stringify({ x1: [num, parseInt(row.latency)] }));
           }
           if (row.type === 'A') {
             x2.push(num);
             y2.push(parseInt(row.latency));
-            ws.send(JSON.stringify({ 2: [num, parseInt(row.latency)] }));
+            ws.send(JSON.stringify({ x2: [num, parseInt(row.latency)] }));
 
           }
         }
@@ -452,24 +452,22 @@ wss.on('connection', async (ws, req) => {
     const tail = new Tail(inputPath);
 
     tail.on("line", function (data) {
-      const lines = data.split(';')
-      console.log(lines)
+      const lines = data.split(',')
 
-      const endTime = parseInt(lines[0]);
+      const endTime = parseInt(lines[2]);
 
-
-      if (lines[0].match(/^\d+$/)) {
+      if (lines[0] !== '0' && !isNaN(endTime)) {
         const num = Math.floor((endTime - database_startup_time) / 1000000);
 
         if (lines[5] === 'N') {
           x1.push(num);
           y1.push(parseInt(lines[4]));
-          ws.send(JSON.stringify({ 1: [num, parseInt(lines[4])] }));
+          ws.send(JSON.stringify({ x1: [num, parseInt(lines[4])] }));
         }
         if (lines[5] === 'A') {
           x2.push(num);
           y2.push(parseInt(lines[4]));
-          ws.send(JSON.stringify({ 2: [num, parseInt(lines[4])] }));
+          ws.send(JSON.stringify({ x2: [num, parseInt(lines[4])] }));
         }
       }
     
